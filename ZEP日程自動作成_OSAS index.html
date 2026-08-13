@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>治療スケジュール自動作成（閉塞性睡眠時無呼吸症候群）</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:#eef3f8;color:#20262b;line-height:1.65}
+.wrap{max-width:620px;margin:0 auto;padding:18px 14px 50px}
+.head{background:#008c7d;color:#fff;border-radius:16px 16px 0 0;padding:18px 20px}
+.head h1{font-size:16px;margin:0;font-weight:800}
+.head p{font-size:12px;margin:6px 0 0;opacity:.92}
+.card{background:#fff;border:1px solid #d8e0e8;border-top:0;border-radius:0 0 16px 16px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+label{display:block;font-size:13.5px;font-weight:700;margin:6px 0 8px}
+input[type=date]{width:100%;padding:15px;font-size:18px;border:1.5px solid #cfd8e2;border-radius:12px;background:#fff}
+.btn{display:block;width:100%;padding:16px;margin:18px 0 4px;border:0;border-radius:14px;background:#008c7d;color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+.btn:active{background:#00685e}
+.note{font-size:11.5px;color:#7a8593;margin:8px 0 0}
+table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px;overflow:hidden;border-radius:10px}
+th,td{border:1px solid #e4eaf0;padding:10px 8px;text-align:center}
+th{background:#e6f6f3;color:#00685e;font-weight:700}
+tr:nth-child(even) td{background:#f7fbfa}
+.tag{display:inline-block;background:#eef7f5;color:#00685e;border-radius:8px;padding:2px 8px;font-size:11px;margin-left:6px}
+.sum{margin-top:14px;background:#fff8de;border:1px solid #f0c84b;border-radius:12px;padding:12px 14px;font-size:12.5px;color:#5b4a10}
+.foot{font-size:11px;color:#9aa4b0;margin-top:20px;text-align:center}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#e6f6f3;color:#00685e;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <span class="chip" style="background:rgba(255,255,255,.18);color:#fff">ゼップバウンド治療</span>
+    <h1>治療スケジュール自動作成<br>（閉塞性睡眠時無呼吸症候群）</h1>
+    <p>「治療計画作成日」を選んでボタンを押すと、以後の日程を自動で作成します。</p>
+  </div>
+  <div class="card">
+    <label for="d">治療計画作成日を入力してください</label>
+    <input type="date" id="d">
+    <button class="btn" onclick="build()">日程を作成する</button>
+    <p class="note">※ 実際の日程は主治医の指示に従ってください。祝日にあたる場合は前後の同じ曜日へ調整してください。</p>
+    <div id="out"></div>
+    <p class="foot">芳珠記念病院 ／ やわたメディカルセンター</p>
+  </div>
+</div>
+<script>
+var W=["日","月","火","水","木","金","土"];
+function f(dt){return dt.getFullYear()+"/"+(dt.getMonth()+1)+"/"+dt.getDate()+"（"+W[dt.getDay()]+"）";}
+function am(dt,m){var x=new Date(dt);x.setMonth(x.getMonth()+m);return x;}
+function aw(dt,w){var x=new Date(dt);x.setDate(x.getDate()+w*7);return x;}
+function ad(dt,d){var x=new Date(dt);x.setDate(x.getDate()+d);return x;}
+function build(){
+  var v=document.getElementById("d").value;
+  if(!v){alert("治療計画作成日を選択してください");return;}
+  var D=new Date(v+"T00:00:00");
+  var start=am(D,3), end=aw(start,52), psg=am(start,6); psg.setDate(psg.getDate()+15);
+  var rows=[];
+  rows.push(["治療計画作成日", f(D), "起点"]);
+  rows.push(["薬物治療開始（1回目注射）", f(start), "起点+3ヶ月"]);
+  rows.push(["栄養指導 第1回目", f(ad(D,30)), "準備期間"]);
+  rows.push(["栄養指導 第2回目", f(ad(D,60)), "準備期間"]);
+  var t=start;
+  for(var i=3;i<=7;i++){ t=am(t,2); rows.push(["栄養指導 第"+i+"回目", f(t), "2ヶ月毎"]); }
+  rows.push(["効果測定 PSG検査（入院）", f(psg)+" 頃", "開始6〜7ヶ月後"]);
+  rows.push(["薬物治療終了（52週後）", f(end), "ゴール"]);
+  var h="<table><tr><th>項目</th><th>予定日（曜日）</th><th>目安</th></tr>";
+  for(var j=0;j<rows.length;j++){ h+="<tr><td style='text-align:left'>"+rows[j][0]+"</td><td>"+rows[j][1]+"</td><td><span class='tag'>"+rows[j][2]+"</span></td></tr>"; }
+  h+="</table>";
+  h+="<div class='sum'>治療計画作成から治療終了まで <b>約15ヶ月</b>。受診間隔の厳守が必要です（保険診療の要件）。毎月の受診・体重測定を行い、CPAPは継続してください。</div>";
+  document.getElementById("out").innerHTML=h;
+  document.getElementById("out").scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>
